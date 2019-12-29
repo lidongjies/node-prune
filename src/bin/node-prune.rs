@@ -1,5 +1,9 @@
-use node_prune::hello_world;
+use node_prune::{Prune, Stats};
 
 fn main() {
-    hello_world();
+    let prune = Prune::init();
+    // println!("{:?}", prune);
+
+    let stats: Stats = prune.run();
+    println!("{:?}", stats);
 }
