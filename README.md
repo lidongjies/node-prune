@@ -26,14 +26,13 @@ delete all files and directories by async non blocking io.
 ### Prune
 
 ```rust
-use async_std::fs; // async-std filesystem module
+use std::fs;
 use std::collections::HashSet;
 
 struct Stats {
-    total_files: usize,
-    files_removed: usize,
-    total_size: usize,
-    duration: Duration,
+    total_files: u32,
+    files_removed: u32,
+    total_size: u64,
 }
 
 struct Config {
@@ -49,3 +48,14 @@ struct Prune {
     files: HashSet<String>,
 }
 ```
+
+## Roadmap
+
+- [x] 实现基本功能
+- [ ] release 多个版本，curl 安装
+- [ ] 添加 log
+- [ ] better error handling
+- [ ] unit test
+- [ ] intergation test
+- [ ] 输出结果包括和执行时长
+- [ ] 实现进度条
