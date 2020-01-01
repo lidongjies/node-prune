@@ -27,7 +27,7 @@ delete all files and directories by async non blocking io.
 
 ```rust
 use async_std::fs; // async-std filesystem module
-use std::collections::Map;
+use std::collections::HashSet;
 
 struct Stats {
     total_files: usize,
@@ -44,8 +44,8 @@ struct Config {
 struct Prune {
     dir: PathBuf,
     log: None,
-    dirs: Map<String, ()>,
-    exts: Map<String, ()>,
-    files: Map<String, ()>,
+    dirs: HashSet<String>,
+    exts: HashSet<String>,
+    files: HashSet<String>,
 }
 ```

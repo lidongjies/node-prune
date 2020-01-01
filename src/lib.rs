@@ -1,7 +1,9 @@
-use async_std::fs;
+// use async_std::fs;
+// use std::time::Duration;
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::fs;
+use std::path::Path;
+use walkdir::WalkDir;
 
 const DEFAULT_FILES: &'static str = r"
 Jenkinsfile,
@@ -41,6 +43,7 @@ circle.yml,
 .coveralls.yml,
 CHANGES,
 changelog,
+License,
 LICENSE.txt,
 LICENSE,
 LICENSE-MIT,
@@ -94,31 +97,30 @@ coverage,
 ";
 
 const DEFAULT_EXTS: &'static str = r"
-.markdown,
-.md,
-.mkd,
-.ts,
-.jst,
-.coffee,
-.tgz,
-.swp,
+markdown,
+md,
+mkd,
+ts,
+jst,
+coffee,
+tgz,
+swp,
 ";
 
 ///
 ///
 #[derive(Debug)]
 pub struct Stats {
-    total_files: usize,
-    file_removed: usize,
-    file_size: usize,
-    duration: Duration,
+    total_files: u32,
+    file_removed: u32,
+    file_size: u64,
 }
 
 ///
 ///
 #[derive(Debug)]
 pub struct Prune {
-    dir: PathBuf,
+    dir: String,
     files: HashSet<String>,
     exts: HashSet<String>,
     dirs: HashSet<String>,
@@ -129,31 +131,92 @@ pub struct Prune {
 impl Prune {
     pub fn init() -> Self {
         Self {
-            dir: PathBuf::from("node_modules"),
+            dir: String::from("node_modules"),
             files: to_map(DEFAULT_FILES),
             dirs: to_map(DEFAULT_DIRS),
             exts: to_map(DEFAULT_EXTS),
         }
     }
 
-    pub fn run(&self) -> Stats {
-        Stats {
-            total_files: 10,
-            file_size: 10,
-            file_removed: 9,
-            duration: Duration::from_secs(1),
+    pub fn run(&self) -> Result<Stats, std::io::Error> {
+        let mut state = Stats {
+            total_files: 0,
+            file_size: 0,
+            file_removed: 0,
+        };
+        for entry in WalkDir::new(&self.dir).into_iter().filter_map(|e| e.ok()) {
+            let filepath = entry.path();
+            if !self.need_prune(&filepath) {
+                println!("skip {:?}", filepath.display());
+            } else {
+                state.total_files += 1;
+                state.file_size += 1;
+
+                if filepath.is_dir() {
+                    let s = dir_state(&filepath)?;
+                    state.total_files += s.total_files;
+                    state.file_removed += s.file_removed;
+                    state.file_size += s.file_size;
+
+                    match fs::remove_dir_all(&filepath) {
+                        Ok(_) => println!("removed {}", filepath.display()),
+                        Err(err) => {
+                            println!("removed dir {} failed with err {}", filepath.display(), err)
+                        }
+                    };
+                } else {
+                    match fs::remove_file(&filepath) {
+                        Ok(_) => println!("removed {}", filepath.display()),
+                        Err(err) => println!(
+                            "removed file {} failed with err {}",
+                            filepath.display(),
+                            err
+                        ),
+                    }
+                }
+            }
         }
+        Ok(state)
     }
 
-    fn prune(&self, filepath: &Path) -> bool {
-        prune(filepath)
+    pub fn need_prune(&self, filepath: &Path) -> bool {
+        let filename = filepath.file_name().unwrap().to_str().unwrap();
+
+        if filepath.is_dir() {
+            return self.dirs.contains(filename);
+        }
+        if self.files.contains(filename) {
+            return true;
+        }
+
+        if let Some(extension) = filepath.extension() {
+            let ext = extension.to_str().unwrap();
+            if self.exts.contains(ext) {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
 ///
 ///
-fn prune(filepath: &Path) -> bool {
-    true
+fn dir_state(dir: &Path) -> Result<Stats, std::io::Error> {
+    let mut stats = Stats {
+        file_removed: 0,
+        file_size: 0,
+        total_files: 0,
+    };
+    for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
+        let filepath = entry.path();
+        let metadata = std::fs::metadata(&filepath)?;
+        let file_size = metadata.len() as u64;
+        stats.file_removed += 1;
+        stats.file_size += file_size;
+        stats.total_files += 1;
+    }
+    Ok(stats)
 }
 
 ///

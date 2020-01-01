@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 async-std = "1.4.0"
 log = "0.4.8"
+walkdir = "2.2.9"
