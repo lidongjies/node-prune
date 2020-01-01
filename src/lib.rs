@@ -129,10 +129,10 @@ pub struct Config {
 ///
 #[derive(Debug)]
 pub struct Stats {
-    pub total_files: u32,
-    pub file_removed: u32,
-    pub file_size: u64,
-    pub module_size: u64,
+    pub files_total: i64,
+    pub files_removed: i64,
+    pub removed_size: i64,
+    pub module_size: i64,
 }
 
 ///
@@ -160,9 +160,9 @@ impl Prune {
 
     pub fn run(&self, _config: &Config) -> Result<Stats, std::io::Error> {
         let mut state = Stats {
-            total_files: 0,
-            file_size: 0,
-            file_removed: 0,
+            files_total: 0,
+            removed_size: 0,
+            files_removed: 0,
             module_size: 0,
         };
         for entry in WalkDir::new(&self.dir).into_iter().filter_map(|e| e.ok()) {
@@ -170,14 +170,14 @@ impl Prune {
             if !self.need_prune(&filepath) {
                 info!("skip {:?}", filepath.display());
             } else {
-                state.total_files += 1;
-                state.file_size += 1;
+                state.files_total += 1;
+                state.removed_size += 1;
 
                 if filepath.is_dir() {
                     let s = dir_state(&filepath)?;
-                    state.total_files += s.total_files;
-                    state.file_removed += s.file_removed;
-                    state.file_size += s.file_size;
+                    state.files_total += s.files_total;
+                    state.files_removed += s.files_removed;
+                    state.removed_size += s.removed_size;
 
                     match fs::remove_dir_all(&filepath) {
                         Ok(_) => info!("removed {}", filepath.display()),
@@ -197,27 +197,24 @@ impl Prune {
                 }
             }
         }
-        state.module_size = Path::new(&self.dir[..]).metadata().unwrap().len();
+        state.module_size = Path::new(&self.dir[..]).metadata().unwrap().len() as i64;
         Ok(state)
     }
 
     pub fn need_prune(&self, filepath: &Path) -> bool {
         let filename = filepath.file_name().unwrap().to_str().unwrap();
-
         if filepath.is_dir() {
             return self.dirs.contains(filename);
         }
         if self.files.contains(filename) {
             return true;
         }
-
         if let Some(extension) = filepath.extension() {
             let ext = extension.to_str().unwrap();
             if self.exts.contains(ext) {
                 return true;
             }
         }
-
         false
     }
 }
@@ -226,18 +223,18 @@ impl Prune {
 ///
 fn dir_state(dir: &Path) -> Result<Stats, std::io::Error> {
     let mut stats = Stats {
-        file_removed: 0,
-        file_size: 0,
-        total_files: 0,
+        files_total: 0,
+        files_removed: 0,
+        removed_size: 0,
         module_size: 0,
     };
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
         let filepath = entry.path();
         let metadata = std::fs::metadata(&filepath)?;
-        let file_size = metadata.len() as u64;
-        stats.file_removed += 1;
-        stats.file_size += file_size;
-        stats.total_files += 1;
+        let file_size = metadata.len() as i64;
+        stats.files_removed += 1;
+        stats.files_total += 1;
+        stats.removed_size += file_size;
     }
     Ok(stats)
 }
