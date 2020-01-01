@@ -2,10 +2,17 @@
 name = "node-prune"
 version = "0.1.0"
 authors = ["makeco <lidongjies@gmail.com>"]
+license = "MIT"
+description = "Remove unnecessary files from node_modules"
+readme = "README.md"
+homepage = "https://github.com/makeco/node-prune"
+repository = "https://github.com/makeco/node-prune"
+keyword = ["cli", "node", "node_modules", "node-prune"]
+categories = ["command-line-tool"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-log = "0.4.8"
 walkdir = "2.2.9"
+structopt = "0.3.7"
+env_logger = "0.7.1"
+log = "0.4.8"

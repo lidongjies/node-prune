@@ -52,10 +52,14 @@ struct Prune {
 ## Roadmap
 
 - [x] 实现基本功能
-- [ ] release 多个版本，curl 安装
-- [ ] 添加 log
+- [x] parsing command line arguments
+- [x] 添加 log
 - [ ] better error handling
-- [ ] unit test
-- [ ] intergation test
 - [ ] 输出结果包括和执行时长
 - [ ] 实现进度条
+- [ ] unit test TDD
+- [ ] intergation test
+- [ ] cargo install
+- [ ] release binary file
+- [ ] system package manager
+- [ ] other in command line book

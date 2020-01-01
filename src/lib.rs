@@ -3,7 +3,11 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
+use structopt::StructOpt;
 use walkdir::WalkDir;
+
+#[macro_use]
+extern crate log;
 
 const DEFAULT_FILES: &'static str = r"
 Jenkinsfile,
@@ -109,11 +113,26 @@ swp,
 
 ///
 ///
+#[derive(Debug, StructOpt)]
+#[structopt(name = "node-prune")]
+pub struct Config {
+    // verbose model
+    #[structopt(short, long)]
+    verbose: bool,
+
+    // show progress
+    #[structopt(short, long)]
+    progress: bool,
+}
+
+///
+///
 #[derive(Debug)]
 pub struct Stats {
-    total_files: u32,
-    file_removed: u32,
-    file_size: u64,
+    pub total_files: u32,
+    pub file_removed: u32,
+    pub file_size: u64,
+    pub module_size: u64,
 }
 
 ///
@@ -130,6 +149,7 @@ pub struct Prune {
 ///
 impl Prune {
     pub fn init() -> Self {
+        env_logger::init();
         Self {
             dir: String::from("node_modules"),
             files: to_map(DEFAULT_FILES),
@@ -138,16 +158,17 @@ impl Prune {
         }
     }
 
-    pub fn run(&self) -> Result<Stats, std::io::Error> {
+    pub fn run(&self, _config: &Config) -> Result<Stats, std::io::Error> {
         let mut state = Stats {
             total_files: 0,
             file_size: 0,
             file_removed: 0,
+            module_size: 0,
         };
         for entry in WalkDir::new(&self.dir).into_iter().filter_map(|e| e.ok()) {
             let filepath = entry.path();
             if !self.need_prune(&filepath) {
-                println!("skip {:?}", filepath.display());
+                info!("skip {:?}", filepath.display());
             } else {
                 state.total_files += 1;
                 state.file_size += 1;
@@ -159,14 +180,14 @@ impl Prune {
                     state.file_size += s.file_size;
 
                     match fs::remove_dir_all(&filepath) {
-                        Ok(_) => println!("removed {}", filepath.display()),
+                        Ok(_) => info!("removed {}", filepath.display()),
                         Err(err) => {
                             println!("removed dir {} failed with err {}", filepath.display(), err)
                         }
                     };
                 } else {
                     match fs::remove_file(&filepath) {
-                        Ok(_) => println!("removed {}", filepath.display()),
+                        Ok(_) => info!("removed {}", filepath.display()),
                         Err(err) => println!(
                             "removed file {} failed with err {}",
                             filepath.display(),
@@ -176,6 +197,7 @@ impl Prune {
                 }
             }
         }
+        state.module_size = Path::new(&self.dir[..]).metadata().unwrap().len();
         Ok(state)
     }
 
@@ -207,6 +229,7 @@ fn dir_state(dir: &Path) -> Result<Stats, std::io::Error> {
         file_removed: 0,
         file_size: 0,
         total_files: 0,
+        module_size: 0,
     };
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
         let filepath = entry.path();
