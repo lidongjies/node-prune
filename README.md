@@ -10,17 +10,6 @@ Remove unnecessary files from node_modules (.md .ts ...)
 [rust command line book](https://rust-lang-nursery.github.io/cli-wg/)
 [api-guidelines](https://rust-lang.github.io/api-guidelines/naming.html)
 
-## target
-
-delete all files and directories by async non blocking io.
-
-1. 递归遍历 node_modules，如果文件夹或者文件需要删除，记录路径
-2. 异步删除记录中的所有文件夹和文件，并记录文件数量和体积
-3. 展示清除后 node_modules 大小，和第二步骤记录的信息
-
-- tj 的 node-prune 没有展示 node_modules 前后的大小，我每次都要再去看当前 node_modules 的大小，所以应该实现第三步的功能
-- 展示删除进度条，因为第一步已经记录了要删除的文件夹，所以可以默认展示进度条
-
 ## Structures
 
 ### Prune
@@ -30,9 +19,9 @@ use std::fs;
 use std::collections::HashSet;
 
 struct Stats {
-    total_files: u32,
-    files_removed: u32,
-    total_size: u64,
+    total_files: i64,
+    files_removed: i64,
+    total_size: i64,
 }
 
 struct Config {
@@ -41,8 +30,7 @@ struct Config {
 }
 
 struct Prune {
-    dir: PathBuf,
-    log: None,
+    dir: String,
     dirs: HashSet<String>,
     exts: HashSet<String>,
     files: HashSet<String>,
@@ -51,15 +39,21 @@ struct Prune {
 
 ## Roadmap
 
-- [x] 实现基本功能
+- [x] first implementation
 - [x] parsing command line arguments
-- [x] 添加 log
+- [x] add log
+- [x] communicating with human
 - [ ] better error handling
-- [ ] 输出结果包括和执行时长
-- [ ] 实现进度条
 - [ ] unit test TDD
-- [ ] intergation test
+- [ ] bench mark
+- [ ] async std
+- [ ] threadpool + async std
+- [ ] signal handle
+- [ ] communicating with michines
+- [ ] rending document
 - [ ] cargo install
 - [ ] release binary file
 - [ ] system package manager
 - [ ] other in command line book
+- [ ] intergation test
+- [ ] add process bar
