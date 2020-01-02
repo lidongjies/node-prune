@@ -4,11 +4,11 @@ Remove unnecessary files from node_modules (.md .ts ...)
 
 ## guide
 
-[cheat.rs](https://cheats.rs/)
-[rust cargo book](https://doc.rust-lang.org/cargo/)
-[rust document book](https://doc.rust-lang.org/stable/rustdoc/)
-[rust command line book](https://rust-lang-nursery.github.io/cli-wg/)
-[api-guidelines](https://rust-lang.github.io/api-guidelines/naming.html)
+- [cheat.rs](https://cheats.rs/)
+- [rust cargo book](https://doc.rust-lang.org/cargo/)
+- [rust document book](https://doc.rust-lang.org/stable/rustdoc/)
+- [rust command line book](https://rust-lang-nursery.github.io/cli-wg/)
+- [api-guidelines](https://rust-lang.github.io/api-guidelines/naming.html)
 
 ## Structures
 
