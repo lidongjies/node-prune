@@ -1,3 +1,4 @@
+use log::debug;
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
@@ -79,6 +80,8 @@ const DEFAULT_DIRS: &'static str = r"
 __tests__,
 test,
 tests,
+testing,
+benchmark,
 powered-test,
 docs,
 doc,
@@ -180,9 +183,9 @@ impl Prune {
                 stats.removed_size += s.removed_size;
 
                 match fs::remove_dir_all(&filepath) {
-                    Ok(_) => println!("removed {}", filepath.display()),
+                    Ok(_) => debug!("removed {}", filepath.display()),
                     Err(err) => {
-                        println!("removed dir {} failed with err {}", filepath.display(), err)
+                        debug!("removed dir {} failed with err {}", filepath.display(), err)
                     }
                 };
                 walker.skip_current_dir();
@@ -193,32 +196,37 @@ impl Prune {
             stats.removed_size += entry.metadata().unwrap().len();
 
             match fs::remove_file(&filepath) {
-                Ok(_) => println!("removed {}", filepath.display()),
-                Err(err) => println!(
+                Ok(_) => debug!("removed {}", filepath.display()),
+                Err(err) => debug!(
                     "removed file {} failed with err {}",
                     filepath.display(),
                     err
                 ),
             }
         }
+
         stats.module_size = Path::new(&self.dir[..]).metadata().unwrap().len();
         Ok(stats)
     }
 
     pub fn need_prune(&self, filepath: &Path) -> bool {
         let filename = filepath.file_name().unwrap().to_str().unwrap();
+
         if filepath.is_dir() {
             return self.dirs.contains(filename);
         }
+
         if self.files.contains(filename) {
             return true;
         }
+
         if let Some(extension) = filepath.extension() {
             let ext = extension.to_str().unwrap();
             if self.exts.contains(ext) {
                 return true;
             }
         }
+
         false
     }
 }
@@ -232,14 +240,16 @@ fn dir_state(dir: &Path) -> Result<Stats, std::io::Error> {
         removed_size: 0,
         module_size: 0,
     };
+
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
-        let filepath = entry.path();
-        let metadata = std::fs::metadata(&filepath)?;
-        let file_size = metadata.len();
+        let metadata = entry.metadata()?;
         stats.files_total += 1;
         stats.files_removed += 1;
-        stats.removed_size += file_size;
+        if entry.path().is_file() {
+            stats.removed_size += metadata.len();
+        }
     }
+
     Ok(stats)
 }
 

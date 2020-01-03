@@ -1,6 +1,6 @@
 [package]
 name = "node-prune"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["makeco <lidongjies@gmail.com>"]
 license = "MIT"
 description = "Remove unnecessary files from node_modules"
@@ -15,3 +15,6 @@ edition = "2018"
 walkdir = "2.2.9"
 structopt = "0.3.7"
 log = "0.4.8"
+failure = "0.1.6"
+exitfailure = "0.5.1"
+async-std = "1.4.0"
