@@ -155,7 +155,7 @@ impl Prune {
         }
     }
 
-    pub fn run(&self) -> Result<Stats, std::io::Error> {
+    pub fn run(&self) -> Result<Stats, walkdir::Error> {
         let mut stats = Stats {
             files_total: 0,
             removed_size: 0,
@@ -167,7 +167,7 @@ impl Prune {
         loop {
             let entry = match walker.next() {
                 Some(Ok(entry)) => entry,
-                Some(Err(_)) => continue,
+                Some(Err(err)) => return Err(err),
                 None => break,
             };
 
@@ -233,7 +233,7 @@ impl Prune {
 
 ///
 ///
-fn dir_state(dir: &Path) -> Result<Stats, std::io::Error> {
+fn dir_state(dir: &Path) -> Result<Stats, walkdir::Error> {
     let mut stats = Stats {
         files_total: 0,
         files_removed: 0,
