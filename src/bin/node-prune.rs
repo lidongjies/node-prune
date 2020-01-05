@@ -13,7 +13,7 @@ fn main() {
         set_max_level(LevelFilter::Debug);
     }
 
-    let prune = Prune::init();
+    let prune = Prune::new();
 
     let stats = match prune.run() {
         Ok(s) => s,
@@ -29,10 +29,6 @@ fn main() {
     println!(
         "\t removed size: {:.2}KB",
         (stats.removed_size as f64) / 1024f64
-    );
-    println!(
-        "\t node_modules {:.2}KB",
-        (stats.module_size as f64) / 1024f64
     );
     println!("\t duration: {}ms", now.elapsed().as_millis());
     println!();

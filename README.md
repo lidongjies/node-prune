@@ -39,21 +39,29 @@ struct Prune {
 
 ## Roadmap
 
+### v0.0.1
+
 - [x] first implementation
 - [x] parsing command line arguments
 - [x] add log
 - [x] communicating with human
-- [ ] better error handling
+- [x] nicer error reporting
 - [ ] unit test TDD
-- [ ] bench mark
-- [ ] async std
-- [ ] threadpool + async std
-- [ ] signal handle
+- [ ] add docs
+- [ ] intergation test
 - [ ] communicating with michines
-- [ ] rending document
 - [ ] cargo install
+
+### v0.0.2
+
+- [ ] async std
+- [ ] bench mark
 - [ ] release binary file
 - [ ] system package manager
-- [ ] other in command line book
-- [ ] intergation test
+- [ ] signal handle
+- [ ] exit code
 - [ ] add process bar
+
+### v0.0.3
+
+- [ ] threadpool

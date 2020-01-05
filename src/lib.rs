@@ -5,6 +5,8 @@ use std::path::Path;
 use structopt::StructOpt;
 use walkdir::WalkDir;
 
+///
+///
 const DEFAULT_FILES: &'static str = r"
 Jenkinsfile,
 Makefile,
@@ -76,6 +78,7 @@ tsconfig.json,
 tslint.json,
 ";
 
+///
 const DEFAULT_DIRS: &'static str = r"
 __tests__,
 test,
@@ -98,6 +101,7 @@ coverage,
 .github,
 ";
 
+///
 const DEFAULT_EXTS: &'static str = r"
 markdown,
 md,
@@ -130,14 +134,13 @@ pub struct Stats {
     pub files_total: u64,
     pub files_removed: u64,
     pub removed_size: u64,
-    pub module_size: u64,
 }
 
 ///
 ///
 #[derive(Debug)]
-pub struct Prune {
-    dir: String,
+pub struct Prune<'a> {
+    dir: &'a Path,
     files: HashSet<String>,
     exts: HashSet<String>,
     dirs: HashSet<String>,
@@ -145,25 +148,28 @@ pub struct Prune {
 
 ///
 ///
-impl Prune {
-    pub fn init() -> Self {
+impl<'a> Prune<'a> {
+    ///
+    ///
+    pub fn new() -> Self {
         Self {
-            dir: String::from("node_modules"),
-            files: to_map(DEFAULT_FILES),
-            dirs: to_map(DEFAULT_DIRS),
-            exts: to_map(DEFAULT_EXTS),
+            dir: Path::new("node_modules"),
+            files: split(DEFAULT_FILES),
+            dirs: split(DEFAULT_DIRS),
+            exts: split(DEFAULT_EXTS),
         }
     }
 
+    ///
+    ///
     pub fn run(&self) -> Result<Stats, walkdir::Error> {
         let mut stats = Stats {
             files_total: 0,
             removed_size: 0,
             files_removed: 0,
-            module_size: 0,
         };
 
-        let mut walker = WalkDir::new(&self.dir).into_iter();
+        let mut walker = WalkDir::new(self.dir).into_iter();
         loop {
             let entry = match walker.next() {
                 Some(Ok(entry)) => entry,
@@ -172,30 +178,31 @@ impl Prune {
             };
 
             let filepath = entry.path();
-            if !self.need_prune(&filepath) {
-                continue;
-            }
-
-            if filepath.is_dir() {
-                let s = dir_state(&filepath)?;
-                stats.files_total += s.files_total;
-                stats.files_removed += s.files_removed;
-                stats.removed_size += s.removed_size;
-
-                match fs::remove_dir_all(&filepath) {
-                    Ok(_) => debug!("removed {}", filepath.display()),
-                    Err(err) => {
-                        debug!("removed dir {} failed with err {}", filepath.display(), err)
-                    }
-                };
-                walker.skip_current_dir();
+            if !self.need_prune(filepath) {
                 continue;
             }
 
             stats.files_total += 1;
             stats.removed_size += entry.metadata().unwrap().len();
 
-            match fs::remove_file(&filepath) {
+            if filepath.is_dir() {
+                let s = dir_stats(filepath)?;
+                stats.files_total += s.files_total;
+                stats.files_removed += s.files_removed;
+                stats.removed_size += s.removed_size;
+
+                match fs::remove_dir_all(filepath) {
+                    Ok(_) => debug!("removed {}", filepath.display()),
+                    Err(err) => {
+                        debug!("removed dir {} failed with err {}", filepath.display(), err)
+                    }
+                };
+
+                walker.skip_current_dir();
+                continue;
+            }
+
+            match fs::remove_file(filepath) {
                 Ok(_) => debug!("removed {}", filepath.display()),
                 Err(err) => debug!(
                     "removed file {} failed with err {}",
@@ -205,10 +212,11 @@ impl Prune {
             }
         }
 
-        stats.module_size = Path::new(&self.dir[..]).metadata().unwrap().len();
         Ok(stats)
     }
 
+    ///
+    ///
     pub fn need_prune(&self, filepath: &Path) -> bool {
         let filename = filepath.file_name().unwrap().to_str().unwrap();
 
@@ -231,30 +239,89 @@ impl Prune {
     }
 }
 
+/// statistics file count, file size in given directory.
 ///
-///
-fn dir_state(dir: &Path) -> Result<Stats, walkdir::Error> {
+/// # Examlple
+/// ```
+/// let path = Path::new("src");
+/// let stats = dir_stats(path)?;
+/// ```
+fn dir_stats(dir: &Path) -> Result<Stats, walkdir::Error> {
+    let walker = WalkDir::new(dir).into_iter().filter_map(|e| e.ok());
+
     let mut stats = Stats {
         files_total: 0,
         files_removed: 0,
         removed_size: 0,
-        module_size: 0,
     };
 
-    for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
+    for entry in walker {
         let metadata = entry.metadata()?;
         stats.files_total += 1;
         stats.files_removed += 1;
-        if entry.path().is_file() {
-            stats.removed_size += metadata.len();
-        }
+        stats.removed_size += metadata.len();
     }
 
     Ok(stats)
 }
 
+/// split string by comma
 ///
+/// it will return `HashSet<String>`，items in HashSet has trimed
 ///
-fn to_map(paths: &str) -> HashSet<String> {
-    paths.split(",").map(|x| x.trim().to_string()).collect()
+/// # Example
+/// ```
+/// let paths = String::from("prittier,eslint");
+/// let files:  = split(&path[..]);
+/// ```
+fn split(paths: &str) -> HashSet<String> {
+    paths
+        .split(",")
+        .map(|x| x.trim().to_string())
+        .filter(|x| !x.is_empty())
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{dir_stats, split};
+    use std::path::Path;
+
+    #[test]
+    fn dir_stats_happy_path() {
+        let path = Path::new("src");
+        let stats = dir_stats(path).unwrap();
+        assert_eq!(stats.files_total, 4);
+        assert_eq!(stats.files_removed, 4);
+    }
+
+    #[test]
+    fn dir_not_exits() {}
+
+    #[test]
+    fn dir_is_empty() {}
+
+    #[test]
+    fn split_happypath() {
+        let paths = String::from("prettier,eslint,typescript,prettier");
+        let files = split(&paths[..]);
+        assert_eq!(files.len(), 3);
+    }
+
+    #[test]
+    fn split_string_with_consecutive_commas() {
+        let paths = String::from("prettier,,");
+        let files = split(&paths[..]);
+        assert_eq!(files.len(), 1);
+    }
+
+    #[test]
+    fn split_string_with_trim() {
+        let paths = String::from(" prettier ,javascript es6");
+        let files = split(&paths[..]);
+        assert_eq!(files.len(), 2);
+        assert!(files.contains("prettier"));
+        assert!(files.contains("javascript es6"));
+    }
 }
