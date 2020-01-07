@@ -46,8 +46,8 @@ struct Prune {
 - [x] add log
 - [x] communicating with human
 - [x] nicer error reporting
-- [ ] unit test TDD
-- [ ] add docs
+- [x] unit test TDD
+- [x] add docs
 - [ ] intergation test
 - [ ] communicating with michines
 - [ ] cargo install

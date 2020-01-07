@@ -5,8 +5,7 @@ use std::path::Path;
 use structopt::StructOpt;
 use walkdir::WalkDir;
 
-///
-///
+/// default prune files
 const DEFAULT_FILES: &'static str = r"
 Jenkinsfile,
 Makefile,
@@ -78,7 +77,7 @@ tsconfig.json,
 tslint.json,
 ";
 
-///
+/// default prune directories
 const DEFAULT_DIRS: &'static str = r"
 __tests__,
 test,
@@ -101,7 +100,7 @@ coverage,
 .github,
 ";
 
-///
+/// default prune extensions
 const DEFAULT_EXTS: &'static str = r"
 markdown,
 md,
@@ -113,8 +112,6 @@ tgz,
 swp,
 ";
 
-///
-///
 #[derive(Debug, StructOpt)]
 #[structopt(name = "node-prune")]
 pub struct Config {
@@ -127,8 +124,6 @@ pub struct Config {
     pub verbose: bool,
 }
 
-///
-///
 #[derive(Debug)]
 pub struct Stats {
     pub files_total: u64,
@@ -136,8 +131,6 @@ pub struct Stats {
     pub removed_size: u64,
 }
 
-///
-///
 #[derive(Debug)]
 pub struct Prune<'a> {
     dir: &'a Path,
@@ -146,11 +139,7 @@ pub struct Prune<'a> {
     dirs: HashSet<String>,
 }
 
-///
-///
 impl<'a> Prune<'a> {
-    ///
-    ///
     pub fn new() -> Self {
         Self {
             dir: Path::new("node_modules"),
@@ -160,8 +149,6 @@ impl<'a> Prune<'a> {
         }
     }
 
-    ///
-    ///
     pub fn run(&self) -> Result<Stats, walkdir::Error> {
         let mut stats = Stats {
             files_total: 0,
@@ -215,9 +202,8 @@ impl<'a> Prune<'a> {
         Ok(stats)
     }
 
-    ///
-    ///
-    pub fn need_prune(&self, filepath: &Path) -> bool {
+    /// is filepath need prune
+    fn need_prune(&self, filepath: &Path) -> bool {
         let filename = filepath.file_name().unwrap().to_str().unwrap();
 
         if filepath.is_dir() {
@@ -297,10 +283,13 @@ mod tests {
     }
 
     #[test]
-    fn dir_not_exits() {}
-
-    #[test]
-    fn dir_is_empty() {}
+    fn dir_not_exits() {
+        let path = Path::new("not_exist");
+        let stats = dir_stats(path).unwrap();
+        assert_eq!(stats.files_removed, 0);
+        assert_eq!(stats.files_total, 0);
+        assert_eq!(stats.files_removed, 0);
+    }
 
     #[test]
     fn split_happypath() {
