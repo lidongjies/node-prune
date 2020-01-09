@@ -8,13 +8,16 @@ readme = "README.md"
 homepage = "https://github.com/makeco/node-prune"
 repository = "https://github.com/makeco/node-prune"
 keyword = ["cli", "node", "node_modules", "node-prune"]
-categories = ["command-line-tool"]
+categories = ["command-line-utilities"]
 edition = "2018"
 
 [dependencies]
 walkdir = "2.2.9"
 structopt = "0.3.7"
 log = "0.4.8"
+atty = "0.2.14"
+serde_json = "1.0.44"
+serde = "1.0.104"
 
 [dev-dependencies]
 assert_cmd = "0.12.0"

@@ -29,8 +29,8 @@ struct Config {
     progress: bool,
 }
 
-struct Prune {
-    dir: String,
+struct Prune<'a> {
+    dir: &<'a>Path,
     dirs: HashSet<String>,
     exts: HashSet<String>,
     files: HashSet<String>,
@@ -48,9 +48,9 @@ struct Prune {
 - [x] nicer error reporting
 - [x] unit test TDD
 - [x] add docs
-- [ ] intergation test
+- [x] cargo install
 - [ ] communicating with michines
-- [ ] cargo install
+- [ ] intergation test
 
 ### v0.0.2
 

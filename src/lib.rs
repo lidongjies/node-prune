@@ -1,4 +1,5 @@
 use log::debug;
+use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
@@ -124,7 +125,7 @@ pub struct Config {
     pub verbose: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Stats {
     pub files_total: u64,
     pub files_removed: u64,
