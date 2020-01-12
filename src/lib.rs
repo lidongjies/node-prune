@@ -1,8 +1,10 @@
+use exitfailure::ExitFailure;
+use failure::ResultExt;
 use log::debug;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use walkdir::WalkDir;
 
@@ -117,15 +119,20 @@ swp,
 #[structopt(name = "node-prune")]
 pub struct Config {
     // node_modules path
-    #[structopt(short, long, default_value = "node_modules")]
-    pub path: String,
+    #[structopt(
+        short = "p",
+        long = "path",
+        parse(from_os_str),
+        default_value = "node_modules"
+    )]
+    pub path: PathBuf,
 
     // verbose model
-    #[structopt(short, long)]
+    #[structopt(short = "v", long = "verbose")]
     pub verbose: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 pub struct Stats {
     pub files_total: u64,
     pub files_removed: u64,
@@ -133,40 +140,41 @@ pub struct Stats {
 }
 
 #[derive(Debug)]
-pub struct Prune<'a> {
-    dir: &'a Path,
+pub struct Prune {
+    pub dir: PathBuf,
     files: HashSet<String>,
     exts: HashSet<String>,
     dirs: HashSet<String>,
 }
 
-impl<'a> Prune<'a> {
+impl Prune {
     pub fn new() -> Self {
         Self {
-            dir: Path::new("node_modules"),
+            dir: PathBuf::from("node_modules"),
             files: split(DEFAULT_FILES),
             dirs: split(DEFAULT_DIRS),
             exts: split(DEFAULT_EXTS),
         }
     }
 
-    pub fn run(&self) -> Result<Stats, walkdir::Error> {
-        let mut stats = Stats {
-            files_total: 0,
-            removed_size: 0,
-            files_removed: 0,
-        };
+    pub fn run(&self) -> Result<Stats, ExitFailure> {
+        let mut stats: Stats = Default::default();
 
-        let mut walker = WalkDir::new(self.dir).into_iter();
+        let mut walker = WalkDir::new(&self.dir).into_iter();
         loop {
             let entry = match walker.next() {
                 Some(Ok(entry)) => entry,
-                Some(Err(err)) => return Err(err),
+                Some(Err(err)) => {
+                    let err_msg = format!("access {} error", err.path().unwrap().display());
+                    let error = Err(err.into_io_error().unwrap());
+                    return error.context(err_msg)?;
+                }
                 None => break,
             };
 
             let filepath = entry.path();
             if !self.need_prune(filepath) {
+                debug!("skip: {}", filepath.display());
                 continue;
             }
 
@@ -179,25 +187,15 @@ impl<'a> Prune<'a> {
                 stats.files_removed += s.files_removed;
                 stats.removed_size += s.removed_size;
 
-                match fs::remove_dir_all(filepath) {
-                    Ok(_) => debug!("removed {}", filepath.display()),
-                    Err(err) => {
-                        debug!("removed dir {} failed with err {}", filepath.display(), err)
-                    }
-                };
+                fs::remove_dir_all(filepath)
+                    .with_context(|_err| format!("removing directory {}", filepath.display()))?;
 
                 walker.skip_current_dir();
                 continue;
             }
 
-            match fs::remove_file(filepath) {
-                Ok(_) => debug!("removed {}", filepath.display()),
-                Err(err) => debug!(
-                    "removed file {} failed with err {}",
-                    filepath.display(),
-                    err
-                ),
-            }
+            fs::remove_file(filepath)
+                .with_context(|_err| format!("removing file {}", filepath.display()))?;
         }
 
         Ok(stats)
@@ -227,20 +225,10 @@ impl<'a> Prune<'a> {
 }
 
 /// statistics file count, file size in given directory.
-///
-/// # Examlple
-/// ```
-/// let path = Path::new("src");
-/// let stats = dir_stats(path)?;
-/// ```
 fn dir_stats(dir: &Path) -> Result<Stats, walkdir::Error> {
     let walker = WalkDir::new(dir).into_iter().filter_map(|e| e.ok());
 
-    let mut stats = Stats {
-        files_total: 0,
-        files_removed: 0,
-        removed_size: 0,
-    };
+    let mut stats: Stats = Default::default();
 
     for entry in walker {
         let metadata = entry.metadata()?;
@@ -255,12 +243,6 @@ fn dir_stats(dir: &Path) -> Result<Stats, walkdir::Error> {
 /// split string by comma
 ///
 /// it will return `HashSet<String>`，items in HashSet has trimed
-///
-/// # Example
-/// ```
-/// let paths = String::from("prittier,eslint");
-/// let files:  = split(&path[..]);
-/// ```
 fn split(paths: &str) -> HashSet<String> {
     paths
         .split(",")
@@ -295,7 +277,7 @@ mod tests {
     #[test]
     fn split_happypath() {
         let paths = String::from("prettier,eslint,typescript,prettier");
-        let files = split(&paths[..]);
+        let files = split(&paths);
         assert_eq!(files.len(), 3);
     }
 

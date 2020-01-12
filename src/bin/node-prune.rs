@@ -1,12 +1,12 @@
 use atty::Stream;
+use exitfailure::ExitFailure;
 use log::{set_max_level, LevelFilter};
 use node_prune::{Config, Prune};
 use serde_json::json;
-use std::path::Path;
 use std::time::Instant;
 use structopt::StructOpt;
 
-fn main() {
+fn main() -> Result<(), ExitFailure> {
     set_max_level(LevelFilter::Warn);
     let now = Instant::now();
 
@@ -15,15 +15,11 @@ fn main() {
         set_max_level(LevelFilter::Debug);
     }
 
-    let prune = Prune::new();
-
-    let stats = match prune.run() {
-        Ok(s) => s,
-        Err(err) => {
-            let path = err.path().unwrap_or(Path::new("")).display();
-            panic!("failed to access entry {}", path)
-        }
-    };
+    let mut prune = Prune::new();
+    if config.path.exists() {
+        prune.dir = config.path;
+    }
+    let stats = prune.run()?;
 
     if atty::is(Stream::Stdout) {
         println!();
@@ -39,4 +35,6 @@ fn main() {
         let json_stats = json!(&stats);
         println!("{}", json_stats);
     }
+
+    Ok(())
 }

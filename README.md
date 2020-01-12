@@ -49,7 +49,7 @@ struct Prune<'a> {
 - [x] unit test TDD
 - [x] add docs
 - [x] cargo install
-- [ ] communicating with michines
+- [x] communicating with michines
 - [ ] intergation test
 
 ### v0.0.2
