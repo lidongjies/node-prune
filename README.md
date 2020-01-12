@@ -50,7 +50,7 @@ struct Prune<'a> {
 - [x] add docs
 - [x] cargo install
 - [x] communicating with michines
-- [ ] intergation test
+- [x] intergation test
 
 ### v0.0.2
 
