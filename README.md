@@ -51,6 +51,7 @@ struct Prune<'a> {
 - [x] cargo install
 - [x] communicating with michines
 - [x] intergation test
+- [ ] bench mark
 
 ### v0.0.2
 
@@ -58,10 +59,9 @@ struct Prune<'a> {
 - [ ] bench mark
 - [ ] release binary file
 - [ ] system package manager
-- [ ] signal handle
-- [ ] exit code
-- [ ] add process bar
 
 ### v0.0.3
 
 - [ ] threadpool
+- [ ] signal handle
+- [ ] exit code
