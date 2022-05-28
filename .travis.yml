@@ -1,109 +1,120 @@
+# Based on the "trust" template v0.1.2
+# https://github.com/japaric/trust/tree/v0.1.2
+
+dist: trusty
 language: rust
+services: docker
+sudo: required
+
 env:
   global:
-    - PROJECT_NAME: node-prune
-    - RUST_BACKTRACE: full
-addons:
-  apt:
-    packages:
-      # For generating man page.
-      - libxslt1-dev
-      - asciidoc
-      - docbook-xsl
-      - xsltproc
-      - libxml2-utils
-      # Needed for completion-function test.
-      - zsh
-      # Needed for testing decompression search.
-      - xz-utils
-      - liblz4-tool
-      # For building MUSL static builds on Linux.
-      - musl-tools
+    - CRATE_NAME=node-prune
+
 matrix:
-  fast_finish: true
   include:
-    # Nightly channel.
-    # All *nix releases are done on the nightly channel to take advantage
-    # of the regex library's multiple pattern SIMD search.
-    - os: linux
+#    Android
+#    - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
+#    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
+#    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
+#    - env: TARGET=i686-linux-android DISABLE_TESTS=1
+#    - env: TARGET=x86_64-linux-android DISABLE_TESTS=1
+
+#    iOS
+#    - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1
+#      os: osx
+#    - env: TARGET=armv7-apple-ios DISABLE_TESTS=1
+#      os: osx
+#    - env: TARGET=armv7s-apple-ios DISABLE_TESTS=1
+#      os: osx
+#    - env: TARGET=i386-apple-ios DISABLE_TESTS=1
+#      os: osx
+#    - env: TARGET=x86_64-apple-ios DISABLE_TESTS=1
+#      os: osx
+
+    # Linux
+    - env: TARGET=aarch64-unknown-linux-gnu
+    - env: TARGET=arm-unknown-linux-gnueabi
+    - env: TARGET=armv7-unknown-linux-gnueabihf
+    - env: TARGET=i686-unknown-linux-gnu
+    - env: TARGET=i686-unknown-linux-musl
+    - env: TARGET=mips-unknown-linux-gnu
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+    - env: TARGET=mips64el-unknown-linux-gnuabi64
+    - env: TARGET=mipsel-unknown-linux-gnu
+    - env: TARGET=powerpc-unknown-linux-gnu
+    - env: TARGET=powerpc64-unknown-linux-gnu
+    - env: TARGET=powerpc64le-unknown-linux-gnu
+    - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
+    - env: TARGET=x86_64-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-musl
+
+    # OSX
+    - env: TARGET=i686-apple-darwin
+      os: osx
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+
+    # *BSD
+    - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
+    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
+    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
+
+    # Windows
+    - env: TARGET=x86_64-pc-windows-gnu
+
+    # Bare metal
+    # These targets don't support std and as such are likely not suitable for
+    # most crates.
+    # - env: TARGET=thumbv6m-none-eabi
+    # - env: TARGET=thumbv7em-none-eabi
+    # - env: TARGET=thumbv7em-none-eabihf
+    # - env: TARGET=thumbv7m-none-eabi
+
+    # Testing other channels
+    - env: TARGET=x86_64-unknown-linux-gnu
       rust: nightly
-      env: TARGET=i686-unknown-linux-musl
-    - os: linux
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
       rust: nightly
-      env: TARGET=x86_64-unknown-linux-musl
-    - os: osx
-      rust: nightly
-      # XML_CATALOG_FILES is apparently necessary for asciidoc on macOS.
-      env: TARGET=x86_64-apple-darwin XML_CATALOG_FILES=/usr/local/etc/xml/catalog
-    - os: linux
-      rust: nightly
-      env: TARGET=arm-unknown-linux-gnueabihf GCC_VERSION=4.8
-      addons:
-        apt:
-          packages:
-            - gcc-4.8-arm-linux-gnueabihf
-            - binutils-arm-linux-gnueabihf
-            - libc6-armhf-cross
-            - libc6-dev-armhf-cross
-            # For generating man page.
-            - libxslt1-dev
-            - asciidoc
-            - docbook-xsl
-            - xsltproc
-            - libxml2-utils
-    # Beta channel. We enable these to make sure there are no regressions in
-    # Rust beta releases.
-    - os: linux
-      rust: beta
-      env: TARGET=x86_64-unknown-linux-musl
-    - os: linux
-      rust: beta
-      env: TARGET=x86_64-unknown-linux-gnu
-    # Minimum Rust supported channel. We enable these to make sure node-prune
-    # continues to work on the advertised minimum Rust version.
-    - os: linux
-      rust: 1.28.0
-      env: TARGET=x86_64-unknown-linux-gnu
-    - os: linux
-      rust: 1.28.0
-      env: TARGET=x86_64-unknown-linux-musl
-    - os: linux
-      rust: 1.28.0
-      env: TARGET=arm-unknown-linux-gnueabihf GCC_VERSION=4.8
-      addons:
-        apt:
-          packages:
-            - gcc-4.8-arm-linux-gnueabihf
-            - binutils-arm-linux-gnueabihf
-            - libc6-armhf-cross
-            - libc6-dev-armhf-cross
-            # For generating man page.
-            - libxslt1-dev
-            - asciidoc
-            - docbook-xsl
-            - xsltproc
-            - libxml2-utils
-install: ci/install.sh
-script: ci/script.sh
-before_deploy: ci/before_deploy.sh
+
+before_install:
+  - set -e
+  - rustup self update
+
+install:
+  - sh ci/install.sh
+  - source ~/.cargo/env || true
+
+script:
+  - bash ci/script.sh
+
+after_script: set +e
+
+before_deploy:
+  - sh ci/before_deploy.sh
+
 deploy:
-  provider: releases
-  file_glob: true
-  file: deployment/${PROJECT_NAME}-${TRAVIS_TAG}-${TARGET}.tar.gz
-  skip_cleanup: true
-  on:
-    condition: $TRAVIS_RUST_VERSION = nightly
-    branch: feature/travis  # i guess we do need this after all?
-    tags: true
   api_key:
-    secure: "IbSnsbGkxSydR/sozOf1/SRvHplzwRUHzcTjM7BKnr7GccL86gRPUrsrvD103KjQUGWIc1TnK1YTq5M0Onswg/ORDjqa1JEJPkPdPnVh9ipbF7M2De/7IlB4X4qXLKoApn8+bx2x/mfYXu4G+G1/2QdbaKK2yfXZKyjz0YFx+6CNrVCT2Nk8q7aHvOOzAL58vsG8iPDpupuhxlMDDn/UhyOWVInmPPQ0iJR1ZUJN8xJwXvKvBbfp3AhaBiAzkhXHNLgBR8QC5noWWMXnuVDMY3k4f3ic0V+p/qGUCN/nhptuceLxKFicMCYObSZeUzE5RAI0/OBW7l3z2iCoc+TbAnn+JrX/ObJCfzgAOXAU3tLaBFMiqQPGFKjKg1ltSYXomOFP/F7zALjpvFp4lYTBajRR+O3dqaxA9UQuRjw27vOeUpMcga4ZzL4VXFHzrxZKBHN//XIGjYAVhJ1NSSeGpeJV5/+jYzzWKfwSagRxQyVCzMooYFFXzn8Yxdm3PJlmp3GaAogNkdB9qKcrEvRINCelalzALPi0hD/HUDi8DD2PNTCLLMo6VSYtvc685Zbe+KgNzDV1YyTrRCUW6JotrS0r2ULLwnsh40hSB//nNv3XmwNmC/CmW5QAnIGj8cBMF4S2t6ohADIndojdAfNiptmaZOIT6owK7bWMgPMyopo="
+    secure: kb8jq3I5LQuW2tmCfRKdJYP+v557HqmEvOjNP93h/yN0soMa3h4WQpBRybX4A/GqUsnhEzGvzEvPlsSj1BZSTDjlRdfplHtv98UU0j6IINQhD7G15/BOxh1ALw3gAI95Dl3Jc4A5IdKI6QuawR/2tXYx6Z9aEixADbIq6bfLZG18zwgR2888bVNRD/G6C5inIN9N+hjPChBYcej5SQcPKxiYJeYrUWeZ7DWl8MBdi+tOu7Sc+zjuDbRKdH8470synQF3iw3ndTkO8wU8KDpQHtvgryGDWgBO2vgei3LAFQRtrJQ5qdik22v1flYVUjUzP8Gabgd3Gnf7Id5Jg3vZNjeY3Hdx7l/oPejS7//GvtWSzhchAMKsGK00MvwId2Wz+FEGf7u59ewws+DFTCysB55VKcXqqQ3kOpHdUdoGD9/twS4GQxbND0yVtV3NSLyWU3V3vuFUbIOgdLX96apltwRzNQ6hJZ6U5XyGxrZNFxI2iNOasb0vNnl2jxwyjUpJUsHXJiJxzgG4BaksStgiexp5UU/J0eoloYPVAwmZpR/eOZmAWoafgIodCw0WNVQkg9emTlUyhPWdp4AFjRpIqkRm4MBbgxQw0e8Nl75tpEVctbLaLHbiBASxNI6r1CHIB6yt+vVfoNVb4Rwm9ieqV1q0EsPrS62xX0Sf3hfHSZs=
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  on:
+    condition: $TRAVIS_RUST_VERSION = stable
+    tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
+
 branches:
   only:
-    # Pushes and PR to the feature/travis branch
-    - feature/travis
-    # Ruby regex to match tags. Required, or travis won't trigger deploys when
-    # a new tag is pushed.
-    # - /^\d+\.\d+\.\d+.*$/
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
 notifications:
   email:
     on_success: never

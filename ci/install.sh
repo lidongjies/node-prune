@@ -1,61 +1,47 @@
-#!/bin/bash
-
-# install stuff needed for the `script` phase
-
-# Where rustup gets installed.
-export PATH="$PATH:$HOME/.cargo/bin"
-
 set -ex
 
-. "$(dirname $0)/utils.sh"
-
-install_rustup() {
-    curl https://sh.rustup.rs -sSf \
-      | sh -s -- -y --default-toolchain="$TRAVIS_RUST_VERSION"
-    rustc -V
-    cargo -V
-}
-
-install_targets() {
-    if [ $(host) != "$TARGET" ]; then
-        rustup target add $TARGET
-    fi
-}
-
-install_osx_dependencies() {
-    if ! is_osx; then
-      return
-    fi
-
-    brew install asciidoc docbook-xsl
-}
-
-configure_cargo() {
-    local prefix=$(gcc_prefix)
-    if [ -n "${prefix}" ]; then
-        local gcc_suffix=
-        if [ -n "$GCC_VERSION" ]; then
-          gcc_suffix="-$GCC_VERSION"
-        fi
-        local gcc="${prefix}gcc${gcc_suffix}"
-
-        # information about the cross compiler
-        "${gcc}" -v
-
-        # tell cargo which linker to use for cross compilation
-        mkdir -p .cargo
-        cat >>.cargo/config <<EOF
-[target.$TARGET]
-linker = "${gcc}"
-EOF
-    fi
-}
-
 main() {
-    install_osx_dependencies
-    install_rustup
-    install_targets
-    configure_cargo
+    local target=
+    if [ $TRAVIS_OS_NAME = linux ]; then
+        target=x86_64-unknown-linux-musl
+        sort=sort
+    else
+        target=x86_64-apple-darwin
+        sort=gsort  # for `sort --sort-version`, from brew's coreutils.
+    fi
+
+    # Builds for iOS are done on OSX, but require the specific target to be
+    # installed.
+    case $TARGET in
+        aarch64-apple-ios)
+            rustup target install aarch64-apple-ios
+            ;;
+        armv7-apple-ios)
+            rustup target install armv7-apple-ios
+            ;;
+        armv7s-apple-ios)
+            rustup target install armv7s-apple-ios
+            ;;
+        i386-apple-ios)
+            rustup target install i386-apple-ios
+            ;;
+        x86_64-apple-ios)
+            rustup target install x86_64-apple-ios
+            ;;
+    esac
+
+    # This fetches latest stable release
+    local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
+                       | cut -d/ -f3 \
+                       | grep -E '^v[0.1.0-9.]+$' \
+                       | $sort --version-sort \
+                       | tail -n1)
+    curl -LSfs https://japaric.github.io/trust/install.sh | \
+        sh -s -- \
+           --force \
+           --git japaric/cross \
+           --tag $tag \
+           --target $target
 }
 
 main
