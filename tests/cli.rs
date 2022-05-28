@@ -24,6 +24,6 @@ fn dir_is_empty() -> Result<(), Box<dyn std::error::Error>> {
         .arg("benches")
         .assert()
         .stdout(str::contains(&stats_json));
-    std::fs::remove_dir("benches");
+    std::fs::remove_dir("benches")?;
     Ok(())
 }
