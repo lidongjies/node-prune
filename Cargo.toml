@@ -27,11 +27,7 @@ async-std = "1.4.0"
 assert_cmd = "1.0.2"
 predicates = "1.0.2"
 
-[lib]
-name = "node_prune"
-doctest = false
-path = "src/lib.rs"
-
 [[bin]]
 name = "node-prune"
 path = "src/bin/node-prune.rs"
+doctest = false
