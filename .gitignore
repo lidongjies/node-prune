@@ -10,19 +10,18 @@ Cargo.lock
 **/*.rs.bk
 
 
-#Added by cargo
+# Added by cargo
 #
 #already existing elements were commented out
 
 /target
-#**/*.rs.bk
+**/*.rs.bk
 
+# IDE config
 .idea
 
+# NPM things
 node_modules
-
 yarn.lock
-
 package.json
-
 package-lock.json

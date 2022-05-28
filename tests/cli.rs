@@ -16,6 +16,7 @@ fn dir_not_exist() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn dir_is_empty() -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir("benches")?;
     let mut cmd = Command::cargo_bin("node-prune")?;
     let stats: Stats = Default::default();
     let stats_json = format!("{}", json!(&stats));
@@ -23,5 +24,6 @@ fn dir_is_empty() -> Result<(), Box<dyn std::error::Error>> {
         .arg("benches")
         .assert()
         .stdout(str::contains(&stats_json));
+    std::fs::remove_dir("benches");
     Ok(())
 }

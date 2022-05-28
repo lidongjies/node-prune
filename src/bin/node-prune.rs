@@ -26,8 +26,8 @@ fn main() -> Result<(), ExitFailure> {
         println!("\t files total: {}", stats.files_total);
         println!("\t files removed: {}", stats.files_removed);
         println!(
-            "\t removed size: {:.2}KB",
-            (stats.removed_size as f64) / 1024f64
+            "\t removed size: {:.1}M",
+            (stats.removed_size as f64) / 1024f64 / 1024f64
         );
         println!("\t duration: {}ms", now.elapsed().as_millis());
         println!();
