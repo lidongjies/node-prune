@@ -1,6 +1,5 @@
-use exitfailure::ExitFailure;
-use failure::ResultExt;
 use log::debug;
+use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
@@ -157,7 +156,7 @@ impl Prune {
         }
     }
 
-    pub fn run(&self) -> Result<Stats, ExitFailure> {
+    pub fn run(&self) -> Result<Stats> {
         let mut stats: Stats = Default::default();
 
         let mut walker = WalkDir::new(&self.dir).into_iter();
@@ -166,8 +165,7 @@ impl Prune {
                 Some(Ok(entry)) => entry,
                 Some(Err(err)) => {
                     let err_msg = format!("access {} error", err.path().unwrap().display());
-                    let error = Err(err.into_io_error().unwrap());
-                    return error.context(err_msg)?;
+                    return Err(anyhow!(err_msg))
                 }
                 None => break,
             };
@@ -188,14 +186,14 @@ impl Prune {
                 stats.removed_size += s.removed_size;
 
                 fs::remove_dir_all(filepath)
-                    .with_context(|_err| format!("removing directory {}", filepath.display()))?;
+                    .with_context(|| format!("removing directory {}", filepath.display()))?;
 
                 walker.skip_current_dir();
                 continue;
             }
 
             fs::remove_file(filepath)
-                .with_context(|_err| format!("removing file {}", filepath.display()))?;
+                .with_context(|| format!("removing file {}", filepath.display()))?;
         }
 
         Ok(stats)

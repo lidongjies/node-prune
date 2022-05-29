@@ -7,10 +7,12 @@ use std::process::Command;
 #[test]
 fn dir_not_exist() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("node-prune")?;
+    let stats: Stats = Default::default();
+    let stats_json = format!("{}", json!(&stats));
     cmd.arg("-p")
         .arg("node_modules")
         .assert()
-        .stderr(str::contains("access node_modules error"));
+        .stdout(str::contains(&stats_json));
     Ok(())
 }
 

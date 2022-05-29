@@ -1,12 +1,12 @@
 use atty::Stream;
-use exitfailure::ExitFailure;
+use anyhow::Result;
 use log::{set_max_level, LevelFilter};
-use node_prune::{Config, Prune};
+use node_prune::{Config, Prune, Stats};
 use serde_json::json;
 use std::time::Instant;
 use structopt::StructOpt;
 
-fn main() -> Result<(), ExitFailure> {
+fn main() -> Result<()> {
     set_max_level(LevelFilter::Warn);
     let now = Instant::now();
 
@@ -19,7 +19,11 @@ fn main() -> Result<(), ExitFailure> {
     if config.path.exists() {
         prune.dir = config.path;
     }
-    let stats = prune.run()?;
+
+    let mut stats:Stats = Default::default();
+    if prune.dir.exists() {
+        stats = prune.run()?;
+    }
 
     if atty::is(Stream::Stdout) {
         println!();
