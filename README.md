@@ -2,9 +2,13 @@
 
 Remove unnecessary files from node_modules (.md .ts ...)
 
-## Roadmap
+## Install
+```
+$ curl -LSfs https://japaric.github.io/trust/install.sh | \
+    sh -s -- --git lidongjies/node-prune
+```
 
-### v0.0.2
+## Roadmap
 
 - [x] first implementation
 - [x] parsing command line arguments
@@ -14,8 +18,5 @@ Remove unnecessary files from node_modules (.md .ts ...)
 - [x] unit test TDD
 - [x] cargo install
 - [x] communicating with machines
-- [ ] handle signal
-- [ ] exit code
 - [ ] add docs
-- [ ] integration test
 - [ ] release binary file
