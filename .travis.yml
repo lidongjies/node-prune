@@ -4,13 +4,13 @@
 dist: trusty
 language: rust
 services: docker
-sudo: required
+root: true
 
 env:
   global:
     - CRATE_NAME=node-prune
 
-matrix:
+jobs:
   include:
     # Android
     # - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
@@ -93,7 +93,7 @@ before_deploy:
   - sh ci/before_deploy.sh
 
 deploy:
-  api_key:
+  token:
     secure: kb8jq3I5LQuW2tmCfRKdJYP+v557HqmEvOjNP93h/yN0soMa3h4WQpBRybX4A/GqUsnhEzGvzEvPlsSj1BZSTDjlRdfplHtv98UU0j6IINQhD7G15/BOxh1ALw3gAI95Dl3Jc4A5IdKI6QuawR/2tXYx6Z9aEixADbIq6bfLZG18zwgR2888bVNRD/G6C5inIN9N+hjPChBYcej5SQcPKxiYJeYrUWeZ7DWl8MBdi+tOu7Sc+zjuDbRKdH8470synQF3iw3ndTkO8wU8KDpQHtvgryGDWgBO2vgei3LAFQRtrJQ5qdik22v1flYVUjUzP8Gabgd3Gnf7Id5Jg3vZNjeY3Hdx7l/oPejS7//GvtWSzhchAMKsGK00MvwId2Wz+FEGf7u59ewws+DFTCysB55VKcXqqQ3kOpHdUdoGD9/twS4GQxbND0yVtV3NSLyWU3V3vuFUbIOgdLX96apltwRzNQ6hJZ6U5XyGxrZNFxI2iNOasb0vNnl2jxwyjUpJUsHXJiJxzgG4BaksStgiexp5UU/J0eoloYPVAwmZpR/eOZmAWoafgIodCw0WNVQkg9emTlUyhPWdp4AFjRpIqkRm4MBbgxQw0e8Nl75tpEVctbLaLHbiBASxNI6r1CHIB6yt+vVfoNVb4Rwm9ieqV1q0EsPrS62xX0Sf3hfHSZs=
   file_glob: true
   file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
@@ -101,7 +101,6 @@ deploy:
     condition: $TRAVIS_RUST_VERSION = stable
     tags: true
   provider: releases
-  skip_cleanup: true
 
 cache: cargo
 before_cache:
