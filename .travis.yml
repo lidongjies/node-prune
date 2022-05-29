@@ -4,7 +4,6 @@
 dist: trusty
 language: rust
 services: docker
-root: true
 
 env:
   global:
