@@ -11,6 +11,12 @@ keyword = ["cli", "node", "node_modules", "node-prune"]
 categories = ["command-line-utilities"]
 default-run = "node-prune"
 edition = "2018"
+build = "build.rs"
+
+[[bin]]
+name = "node-prune"
+path = "src/bin/node-prune.rs"
+doctest = true
 
 [dependencies]
 walkdir = "2.2.9"
@@ -18,14 +24,21 @@ structopt = "0.3.7"
 log = "0.4.8"
 atty = "0.2.14"
 serde_json = "1.0"
-serde = { version = "1.0.123", features = ["derive"] }
 anyhow = "1.0.57"
+serde = { version = "1.0.123", features = ["derive"] }
+clap = { version = "3.1.18", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "1.0.2"
 predicates = "1.0.2"
 
-[[bin]]
-name = "node-prune"
-path = "src/bin/node-prune.rs"
-doctest = false
+[build-dependencies]
+walkdir = "2.2.9"
+structopt = "0.3.7"
+log = "0.4.8"
+atty = "0.2.14"
+serde_json = "1.0"
+anyhow = "1.0.57"
+serde = { version = "1.0.123", features = ["derive"] }
+clap = { version = "3.1.18", features = ["derive"] }
+clap_mangen = "0.1.6"

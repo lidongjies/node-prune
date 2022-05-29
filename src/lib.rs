@@ -1,10 +1,11 @@
-use log::debug;
-use anyhow::{anyhow, Context, Result};
-use serde::Serialize;
-use std::collections::HashSet;
 use std::fs;
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
+
+use anyhow::{anyhow, Context, Result};
+use clap::Parser;
+use log::debug;
+use serde::Serialize;
 use walkdir::WalkDir;
 
 /// default prune files
@@ -114,20 +115,17 @@ tgz,
 swp,
 ";
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "node-prune")]
+#[derive(Parser)]
 pub struct Config {
-    // node_modules path
-    #[structopt(
-        short = "p",
+    #[clap(
+        short = 'p',
         long = "path",
         parse(from_os_str),
         default_value = "node_modules"
     )]
     pub path: PathBuf,
 
-    // verbose model
-    #[structopt(short = "v", long = "verbose")]
+    #[clap(short = 'v', long = "verbose")]
     pub verbose: bool,
 }
 
@@ -165,7 +163,7 @@ impl Prune {
                 Some(Ok(entry)) => entry,
                 Some(Err(err)) => {
                     let err_msg = format!("access {} error", err.path().unwrap().display());
-                    return Err(anyhow!(err_msg))
+                    return Err(anyhow!(err_msg));
                 }
                 None => break,
             };

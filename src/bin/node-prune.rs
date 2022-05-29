@@ -1,16 +1,16 @@
 use atty::Stream;
 use anyhow::Result;
+use clap::Parser;
 use log::{set_max_level, LevelFilter};
 use node_prune::{Config, Prune, Stats};
 use serde_json::json;
 use std::time::Instant;
-use structopt::StructOpt;
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     set_max_level(LevelFilter::Warn);
     let now = Instant::now();
 
-    let config = Config::from_args();
+    let config = Config::parse();
     if config.verbose {
         set_max_level(LevelFilter::Debug);
     }

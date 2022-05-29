@@ -4,7 +4,7 @@ Remove unnecessary files from node_modules (.md .ts ...)
 
 ## Roadmap
 
-### v0.0.1
+### v0.0.2
 
 - [x] first implementation
 - [x] parsing command line arguments
@@ -12,21 +12,10 @@ Remove unnecessary files from node_modules (.md .ts ...)
 - [x] communicating with human
 - [x] nicer error reporting
 - [x] unit test TDD
-- [x] add docs
 - [x] cargo install
 - [x] communicating with machines
-- [ ] integration test
-- [ ] bench mark
-
-### v0.0.2
-
-- [ ] async std
-- [ ] bench mark
-- [ ] release binary file
-- [ ] system package manager
-
-### v0.0.3
-
-- [ ] thread-pool
-- [ ] signal handle
+- [ ] handle signal
 - [ ] exit code
+- [ ] add docs
+- [ ] integration test
+- [ ] release binary file
