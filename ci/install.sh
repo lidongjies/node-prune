@@ -28,6 +28,12 @@ main() {
         x86_64-apple-ios)
             rustup target install x86_64-apple-ios
             ;;
+        i686-apple-darwin)
+            rustup target install i686-apple-darwin
+            ;;
+        x86_64-apple-darwin)
+            rustup target install x86_64-apple-darwin
+            ;;
     esac
 
     # This fetches latest stable release
