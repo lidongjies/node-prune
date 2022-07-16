@@ -32,7 +32,7 @@ tokio = { version = "1.20.0", features = ["full"] }
 
 [dev-dependencies]
 assert_cmd = "1.0.2"
-predicates = "1.0.2"
+predicates = "2.0.1"
 
 [build-dependencies]
 walkdir = "2.2.9"
