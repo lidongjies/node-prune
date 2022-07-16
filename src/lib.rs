@@ -1,11 +1,11 @@
-use std::fs;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use log::debug;
 use serde::Serialize;
+use tokio::fs;
 use walkdir::WalkDir;
 
 /// default prune files
@@ -154,7 +154,7 @@ impl Prune {
         }
     }
 
-    pub fn run(&self) -> Result<Stats> {
+    pub async fn run(&self) -> Result<Stats> {
         let mut stats: Stats = Default::default();
 
         let mut walker = WalkDir::new(&self.dir).into_iter();
@@ -162,8 +162,7 @@ impl Prune {
             let entry = match walker.next() {
                 Some(Ok(entry)) => entry,
                 Some(Err(err)) => {
-                    let err_msg = format!("access {} error", err.path().unwrap().display());
-                    return Err(anyhow!(err_msg));
+                    bail!("access {} error", err.path().unwrap().display())
                 }
                 None => break,
             };
@@ -184,6 +183,7 @@ impl Prune {
                 stats.removed_size += s.removed_size;
 
                 fs::remove_dir_all(filepath)
+                    .await
                     .with_context(|| format!("removing directory {}", filepath.display()))?;
 
                 walker.skip_current_dir();
@@ -191,6 +191,7 @@ impl Prune {
             }
 
             fs::remove_file(filepath)
+                .await
                 .with_context(|| format!("removing file {}", filepath.display()))?;
         }
 

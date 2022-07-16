@@ -1,12 +1,12 @@
 use atty::Stream;
-use anyhow::Result;
 use clap::Parser;
 use log::{set_max_level, LevelFilter};
 use node_prune::{Config, Prune, Stats};
 use serde_json::json;
 use std::time::Instant;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     set_max_level(LevelFilter::Warn);
     let now = Instant::now();
 
@@ -20,9 +20,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         prune.dir = config.path;
     }
 
-    let mut stats:Stats = Default::default();
+    let mut stats: Stats = Default::default();
     if prune.dir.exists() {
-        stats = prune.run()?;
+        stats = prune.run().await?;
     }
 
     if atty::is(Stream::Stdout) {
